@@ -74,7 +74,7 @@ jobs:
           sed -i 's/-Werror=strict-prototypes//g' Makefile
           sed -i 's/-Werror=implicit-int//g' Makefile
           sed -i 's/-Werror=incompatible-pointer-types//g' Makefile
-          sed -i 's/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS)/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS) -Wno-error -Wno-misleading-indentation/' Makefile
+          sed -i 's/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS)/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS) -Wno-error -Wno-misleading-indentation -fno-builtin-stpcpy/' Makefile
           python3 -c "import base64; exec(base64.b64decode('cCA9ICdzb3VuZC9zb2MvbWVkaWF0ZWsvY29kZWMvbXQ2MzU3L210ay1zb2MtY29kZWMtNjM1Ny5jJwp3aXRoIG9wZW4ocCwgJ3InKSBhcyBmOgogICAgcyA9IGYucmVhZCgpCnRhcmdldCA9ICdcdFx0aWYgKEdldERMU3RhdHVzKCkgPT0gdHJ1ZSlcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTsnCnJlcGwgPSAnXHRcdGlmIChHZXRETFN0YXR1cygpID09IHRydWUpIHtcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTtcblx0XHR9Jwphc3NlcnQgdGFyZ2V0IGluIHMsICdUYXJnZXQgc3RhdGVtZW50IG5vdCBmb3VuZCBpbiBtdGstc29jLWNvZGVjLTYzNTcuYycKd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgIGYud3JpdGUocy5yZXBsYWNlKHRhcmdldCwgcmVwbCkpCnByaW50KCdTdWNjZXNzZnVsbHkgcGF0Y2hlZCBtdGstc29jLWNvZGVjLTYzNTcuYyEnKQo='))"
 
           # Fix memcpy, memmove, memset changed binding to STB_GLOBAL for Clang IAS
@@ -83,6 +83,12 @@ jobs:
           # Fix old-style function prototypes in camera sensor driver
           sed -i 's/void hi556_otp_read_enable()/void hi556_otp_read_enable(void)/g' drivers/misc/mediatek/cam_cal/src/mt6765/otp_insensor_dev.c
           sed -i 's/void hi556_otp_read_disable()/void hi556_otp_read_disable(void)/g' drivers/misc/mediatek/cam_cal/src/mt6765/otp_insensor_dev.c
+
+          # Align .builtin_fw to 8 bytes in linker script to satisfy R_AARCH64_LDST64 relocation
+          python3 -c "import base64; exec(base64.b64decode('cCA9ICdpbmNsdWRlL2FzbS1nZW5lcmljL3ZtbGludXgubGRzLmgnCndpdGggb3BlbihwLCAncicpIGFzIGY6CiAgICBzID0gZi5yZWFkKCkKdGFyZ2V0ID0gJ1x0LyogQnVpbHQtaW4gZmlybXdhcmUgYmxvYnMgKi9cdFx0XHRcdFx0XFxuXHQuYnVpbHRpbl9mdyAgICAgICAgOiBBVChBRERSKC5idWlsdGluX2Z3KSAtIExPQURfT0ZGU0VUKSB7XHRcXG5cdFx0Vk1MSU5VWF9TWU1CT0woX19zdGFydF9idWlsdGluX2Z3KSA9IC47XHRcdFx0XFxuXHRcdCooLmJ1aWx0aW5fZncpXHRcdFx0XHRcdFx0XFxuXHRcdFZNTElOVVhfU1lNQk9MKF9fZW5kX2J1aWx0aW5fZncpID0gLjtcdFx0XHRcXG5cdH1cdFx0XHRcdFx0XHRcdFx0XCcKcmVwbCA9ICdcdC8qIEJ1aWx0LWluIGZpcm13YXJlIGJsb2JzICovXHRcdFx0XHRcdFxcblx0LiA9IEFMSUdOKDgpO1x0XHRcdFx0XHRcdFx0XFxuXHQuYnVpbHRpbl9mdyAgICAgICAgOiBBVChBRERSKC5idWlsdGluX2Z3KSAtIExPQURfT0ZGU0VUKSB7XHRcXG5cdFx0LiA9IEFMSUdOKDgpO1x0XHRcdFx0XHRcdFxcblx0XHRWTUxJTlVYX1NZTUJPTChfX3N0YXJ0X2J1aWx0aW5fZncpID0gLjtcdFx0XHRcXG5cdFx0KiguYnVpbHRpbl9mdylcdFx0XHRcdFx0XHRcXG5cdFx0LiA9IEFMSUdOKDgpO1x0XHRcdFx0XHRcdFxcblx0XHRWTUxJTlVYX1NZTUJPTChfX2VuZF9idWlsdGluX2Z3KSA9IC47XHRcdFx0XFxuXHR9XHRcdFx0XHRcdFx0XHRcdFwnCmFzc2VydCB0YXJnZXQgaW4gcywgJ1RhcmdldCBub3QgZm91bmQgaW4gdm1saW51eC5sZHMuaCcKd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgIGYud3JpdGUocy5yZXBsYWNlKHRhcmdldCwgcmVwbCkpCnByaW50KCdTdWNjZXNzZnVsbHkgcGF0Y2hlZCB2bWxpbnV4Lmxkcy5oIScpCg=='))"
+
+          # Implement stpcpy for Clang 12+ libcall optimization
+          python3 -c "import base64; exec(base64.b64decode('cDEgPSAnaW5jbHVkZS9saW51eC9zdHJpbmcuaCcKd2l0aCBvcGVuKHAxLCAncicpIGFzIGY6CiAgICBzMSA9IGYucmVhZCgpCnRhcmdldDEgPSAnZXh0ZXJuIGNoYXIgKiBzdHJjcHkoY2hhciAqLGNvbnN0IGNoYXIgKik7JwpyZXBsMSA9ICdleHRlcm4gY2hhciAqIHN0cmNweShjaGFyICosY29uc3QgY2hhciAqKTtcbmV4dGVybiBjaGFyICogc3RwY3B5KGNoYXIgKiwgY29uc3QgY2hhciAqKTsnCmFzc2VydCB0YXJnZXQxIGluIHMxLCAnVGFyZ2V0IG5vdCBmb3VuZCBpbiBzdHJpbmcuaCcKd2l0aCBvcGVuKHAxLCAndycpIGFzIGY6CiAgICBmLndyaXRlKHMxLnJlcGxhY2UodGFyZ2V0MSwgcmVwbDEpKQoKcDIgPSAnbGliL3N0cmluZy5jJwp3aXRoIG9wZW4ocDIsICdyJykgYXMgZjoKICAgIHMyID0gZi5yZWFkKCkKaW1wbCA9ICdcbiNpZm5kZWYgX19IQVZFX0FSQ0hfU1RQQ1BZXG5jaGFyICpzdHBjcHkoY2hhciAqZGVzdCwgY29uc3QgY2hhciAqc3JjKVxue1xuXHRzaXplX3QgbGVuID0gc3RybGVuKHNyYyk7XG5cdG1lbWNweShkZXN0LCBzcmMsIGxlbiArIDEpO1xuXHRyZXR1cm4gZGVzdCArIGxlbjtcbn1cbkVYUE9SVF9TWU1CT0woc3RwY3B5KTtcbiNlbmRpZlxuJwp3aXRoIG9wZW4ocDIsICd3JykgYXMgZjoKICAgIGYud3JpdGUoczIgKyBpbXBsKQpwcmludCgnU3VjY2Vzc2Z1bGx5IGFkZGVkIHN0cGNweSBpbXBsZW1lbnRhdGlvbiEnKQo='))"
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
