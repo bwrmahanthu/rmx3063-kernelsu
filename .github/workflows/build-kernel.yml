@@ -1,0 +1,102 @@
+name: Build Realme C20 KernelSU
+  
+    on: 
+      workflow_dispatch:
+  
+    jobs:
+      build:
+        runs-on: ubuntu-20.04 
+        steps:
+          - name: Checkout Repository 
+            uses: actions/checkout@v4
+  
+          - name: Install Build Dependencies
+            run: |
+              sudo apt-get update 
+              sudo apt-get install -y git build-essential bc bison flex libssl-dev    
+              libelf-dev \
+                gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libncurses5-dev libncurses5 \
+                python2 python3 zip curl wget
+  
+          - name: Download Proton Clang Toolchain
+            run: |                                                                          
+              git clone --depth=1 https://github.com/kdrag0n/proton-clang.git               
+              "$GITHUB_WORKSPACE/clang"
+  
+          - name: Clone Realme MT6765 Kernel Source
+            run: |
+              git clone --depth=1
+              https://github.com/realme-mediatek-dev/android_kernel_realme_mt6765.git \     
+                -b alps-mp-r0.mp1.tc16sp-pr4-V1_k65v1_64 "$GITHUB_WORKSPACE/kernel"         
+  
+          - name: Integrate KernelSU
+            run: |
+              cd "$GITHUB_WORKSPACE/kernel"
+              curl -LSs
+              "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash
+              -s v0.9.5
+              
+              # Ensure KernelSU is hooked in drivers
+              if ! grep -q "CONFIG_KSU" drivers/Kconfig; then
+                sed -i '/endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig       
+              fi
+              if ! grep -q "kernelsu" drivers/Makefile; then
+                echo "obj-y += kernelsu/" >> drivers/Makefile
+              fi                                                                            
+                                                                                            
+          - name: Enable KernelSU and Kprobes in defconfig                                  
+            run: |                                                                          
+              cd "$GITHUB_WORKSPACE/kernel"                                                 
+              DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"                             
+              if [ ! -f "$DEFCONFIG" ]; then                                                
+                DEFCONFIG=$(find arch/arm64/configs/ -name "*6765*defconfig" | head -n 1)   
+              fi                                                                            
+              echo "Patching defconfig: $DEFCONFIG"                                         
+                                                                                            
+              cat << 'EOF' >> "$DEFCONFIG"                                                  
+              CONFIG_KSU=y                                                                  
+              CONFIG_KPROBES=y                                                              
+              CONFIG_HAVE_KPROBES=y                                                         
+              CONFIG_KRETPROBES=y                                                           
+              CONFIG_OVERLAY_FS=y                                                           
+              EOF                                                                           
+                                                                                            
+          - name: Compile Kernel                                                            
+            run: |                                                                          
+              cd "$GITHUB_WORKSPACE/kernel"                                                 
+              export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"                               
+              export ARCH=arm64                                                             
+              export SUBARCH=arm64                                                          
+              export CROSS_COMPILE=aarch64-linux-gnu-                                       
+              export CROSS_COMPILE_ARM32=arm-linux-gnueabi-                                 
+                                                                                            
+              DEFCONFIG="oppo6765_defconfig"                                                
+              make O=out $DEFCONFIG                                                         
+              make -j$(nproc) O=out CC=clang CLANG_TRIPLE=aarch64-linux-gnu-                
+                                                                                            
+          - name: Pack boot.img                                                             
+            run: |                                                                          
+              mkdir -p "$GITHUB_WORKSPACE/output"                                           
+              KERNEL_BIN="$GITHUB_WORKSPACE/kernel/out/arch/arm64/boot/Image.gz-dtb"        
+              if [ ! -f "$KERNEL_BIN" ]; then                                               
+                KERNEL_BIN="$GITHUB_WORKSPACE/kernel/out/arch/arm64/boot/Image.gz"          
+              fi                                                                            
+              cp "$KERNEL_BIN" "$GITHUB_WORKSPACE/output/Image.gz"                          
+                                                                                            
+              # If base boot.img was uploaded, repack it                                    
+              if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then                                  
+                cd "$GITHUB_WORKSPACE"                                                      
+                wget                                                                        
+                https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
+                unzip -p Magisk-v27.0.apk lib/x86_64/libmagiskboot.so > magiskboot          
+                chmod +x magiskboot                                                         
+                ./magiskboot unpack boot.img                                                
+                cp "$KERNEL_BIN" kernel                                                     
+                ./magiskboot repack boot.img "$GITHUB_WORKSPACE/output/boot-kernelsu.img"   
+              fi                                                                            
+                                                                                            
+          - name: Upload Output Artifacts                                                   
+            uses: actions/upload-artifact@v4                                                
+            with:                                                                           
+              name: Realme-C20-KernelSU                                                     
+              path: output/*            
