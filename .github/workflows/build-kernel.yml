@@ -23,6 +23,7 @@ jobs:
         run: |
           CLANG_URL="https://github.com/kdrag0n/proton-clang.git"
           git clone --depth=1 $CLANG_URL "$GITHUB_WORKSPACE/clang"
+          ln -sf aarch64-linux-gnu-ld "$GITHUB_WORKSPACE/clang/bin/ld"
 
       - name: Clone Realme C20 Kernel Source
         run: |
