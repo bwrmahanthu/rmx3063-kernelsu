@@ -59,6 +59,9 @@ jobs:
           sed -i 's/clock_gettime_return,/clock_gettime_return/g' arch/arm64/kernel/vdso/gettimeofday.S
           sed -i 's|cmd_vdsold = $(CC) $(c_flags)|cmd_vdsold = $(CC) $(c_flags) -fuse-ld=/usr/bin/aarch64-linux-gnu-ld|g' arch/arm64/kernel/vdso/Makefile
           sed -i 's/v0\.4s\[0\]/v0.s[0]/g' arch/arm64/crypto/aes-ce-cipher-core.c
+          sed -i 's/_ASM_EXTABLE/_asm_extable/g' arch/arm64/include/asm/alternative.h
+          sed -i '/\.if.*\\op == cvau/d' arch/arm64/include/asm/assembler.h
+          sed -i '/\.else/,/\.endif/ { /\.else/d; /dc.*\\op/d; /\.endif/d }' arch/arm64/include/asm/assembler.h
 
           # Create stub for missing oppo_phoenix vendor header
           PHOENIX_DIR="$GITHUB_WORKSPACE/vendor/oppo/oppo_phoenix/kernel/oppo_phoenix"
