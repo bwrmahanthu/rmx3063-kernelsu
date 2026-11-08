@@ -48,11 +48,14 @@ jobs:
           DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"
           echo "Patching defconfig: $DEFCONFIG"
           
-          # Fix compiler compatibility for modern Clang on Linux 4.9
+          # Fix compiler compatibility for modern Clang & GCC on Linux 4.9
           echo "exit 0" > scripts/clang-android.sh
           sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_NONE=y/' "$DEFCONFIG"
           sed -i 's/-Werror=unknown-warning-option//g' Makefile
           sed -i 's/-no-integrated-as//g' Makefile
+          sed -i 's/HOSTCFLAGS   :=/HOSTCFLAGS   := -fcommon /' Makefile
+          sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.l
+          sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.lex.c_shipped
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
