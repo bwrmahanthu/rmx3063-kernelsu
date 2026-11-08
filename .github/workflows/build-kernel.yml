@@ -45,6 +45,7 @@ jobs:
       - name: Configure defconfig
         run: |
           cd "$GITHUB_WORKSPACE/kernel"
+          export TARGET_PRODUCT=full_oppo6765
           DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"
           echo "Patching defconfig: $DEFCONFIG"
           
@@ -68,6 +69,11 @@ jobs:
           mkdir -p "$PHOENIX_DIR"
           cp "$GITHUB_WORKSPACE/kernel/drivers/soc/oppo/oppo_phoenix/oppo_phoenix.h" "$PHOENIX_DIR/oppo_phoenix.h"
 
+          # Remove -Werror and fix misleading indentation in sound/drivers
+          find sound/ drivers/ -name Makefile -exec sed -i 's/-Werror//g' {} +
+          sed -i 's/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS)/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS) -Wno-error -Wno-misleading-indentation/' Makefile
+          python3 -c "import base64; exec(base64.b64decode('cCA9ICdzb3VuZC9zb2MvbWVkaWF0ZWsvY29kZWMvbXQ2MzU3L210ay1zb2MtY29kZWMtNjM1Ny5jJwp3aXRoIG9wZW4ocCwgJ3InKSBhcyBmOgogICAgcyA9IGYucmVhZCgpCnRhcmdldCA9ICdcdFx0aWYgKEdldERMU3RhdHVzKCkgPT0gdHJ1ZSlcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTsnCnJlcGwgPSAnXHRcdGlmIChHZXRETFN0YXR1cygpID09IHRydWUpIHtcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTtcblx0XHR9Jwphc3NlcnQgdGFyZ2V0IGluIHMsICdUYXJnZXQgc3RhdGVtZW50IG5vdCBmb3VuZCBpbiBtdGstc29jLWNvZGVjLTYzNTcuYycKd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgIGYud3JpdGUocy5yZXBsYWNlKHRhcmdldCwgcmVwbCkpCnByaW50KCdTdWNjZXNzZnVsbHkgcGF0Y2hlZCBtdGstc29jLWNvZGVjLTYzNTcuYyEnKQo='))"
+
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
           CONFIG_KSU=y
@@ -83,11 +89,12 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
+          export TARGET_PRODUCT=full_oppo6765
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
           
           make O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- oppo6765_defconfig
-          make -j$(nproc) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
+          make -j$(nproc) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- KCFLAGS="-Wno-error -Wno-misleading-indentation"
 
       - name: Repack boot.img
         run: |
