@@ -1,24 +1,25 @@
-name: "Build Realme C20 KernelSU"
-  
-    on: [workflow_dispatch]
-  
+name: Build Realme C20 KernelSU
+    
+    on: 
+      workflow_dispatch:
+    
     jobs:
       build:
         runs-on: ubuntu-20.04
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
-  
+    
           - name: Set up Environment & Dependencies
             run: |
               sudo apt-get update
-              sudo apt-get install -y git build-essential bc bison flex libssl-dev          
+              sudo apt-get install -y git build-essential bc bison flex libssl-dev      
               libelf-dev \
-                gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libncurses5-dev libncurses5 \   
-                python-is-python3 zip curl wget gzip
+                gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libncurses5-dev libncurses5 \
+                python-is-python3 zip curl wget gzip 
   
           - name: Download Proton Clang Toolchain
-            run: |                                                                          
+            run: |
               git clone --depth=1 https://github.com/kdrag0n/proton-clang.git               
               "$GITHUB_WORKSPACE/clang"
   
@@ -33,7 +34,7 @@ name: "Build Realme C20 KernelSU"
               cd "$GITHUB_WORKSPACE/kernel"
               curl -LSs
               "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash
-              -s v0.9.5                                                                     
+              -s v0.9.5
               if ! grep -q "CONFIG_KSU" drivers/Kconfig; then
                 sed -i '/endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig       
               fi
@@ -50,9 +51,9 @@ name: "Build Realme C20 KernelSU"
               fi
               echo "Selected defconfig: $DEFCONFIG"
               cat << 'EOF' >> "$DEFCONFIG"
-              CONFIG_KSU=y                                                                  
-              CONFIG_KPROBES=y                                                              
-              CONFIG_HAVE_KPROBES=y                                                         
+              CONFIG_KSU=y
+              CONFIG_KPROBES=y
+              CONFIG_HAVE_KPROBES=y
               CONFIG_KRETPROBES=y                                                           
               CONFIG_OVERLAY_FS=y                                                           
               EOF                                                                           
@@ -84,22 +85,22 @@ name: "Build Realme C20 KernelSU"
               if [ -f "$GITHUB_WORKSPACE/boot.img.gz" ]; then
                 echo "Decompressing boot.img.gz..."
                 gzip -d "$GITHUB_WORKSPACE/boot.img.gz"
-              fi                                                                            
-                                                                                            
-              if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then                                  
-                echo "Repacking boot.img..."                                                
-                cd "$GITHUB_WORKSPACE"                                                      
-                wget -q                                                                     
+              fi
+  
+              if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then
+                echo "Repacking boot.img..."
+                cd "$GITHUB_WORKSPACE"
+                wget -q
                 https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
                 unzip -p Magisk-v27.0.apk lib/x86_64/libmagiskboot.so > magiskboot          
-                chmod +x magiskboot                                                         
-                ./magiskboot unpack boot.img                                                
-                cp "$KERNEL_BIN" kernel                                                     
+                chmod +x magiskboot
+                ./magiskboot unpack boot.img
+                cp "$KERNEL_BIN" kernel
                 ./magiskboot repack boot.img "$GITHUB_WORKSPACE/output/boot-kernelsu.img"   
-                echo "Done repacking!"                                                      
-              fi                                                                            
-                                                                                            
-          - name: Upload Finished Artifacts                                                 
+                echo "Done repacking!"
+              fi
+  
+          - name: Upload Finished Artifacts
             uses: actions/upload-artifact@v4
             with:
               name: Realme-C20-KernelSU
