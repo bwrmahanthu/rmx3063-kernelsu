@@ -1,22 +1,20 @@
-name: Build Realme C20 KernelSU
-  
-on:
+ name: Build Realme C20 KernelSU
+ on:
       workflow_dispatch:
-  
-jobs:
+ jobs:
       build:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-22.04 
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
   
           - name: Set up Environment & Dependencies
-            run: |
+            run: | 
               sudo apt-get update
-              sudo apt-get install -y git build-essential bc bison flex libssl-dev          
-              libelf-dev \
-                gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libncurses-dev \
-                python-is-python3 zip curl wget gzip
+              sudo apt-get install -y git build-essential bc bison flex 
+              sudo apt-get install -y libssl-dev libelf-dev libncurses-dev 
+              sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+              sudo apt-get install -y python-is-python3 zip curl wget gzip
   
           - name: Download Proton Clang Toolchain
             run: |
@@ -24,32 +22,33 @@ jobs:
               "$GITHUB_WORKSPACE/clang"
   
           - name: Clone Realme MT6765 Kernel Source
-            run: |                                                                          
-              git clone --depth=1                                                           
-              https://github.com/realme-mediatek-dev/android_kernel_realme_mt6765.git \     
-                -b alps-mp-r0.mp1.tc16sp-pr4-V1_k65v1_64 "$GITHUB_WORKSPACE/kernel"         
-                                                                                            
-          - name: Integrate KernelSU                                                        
-            run: |                                                                          
-              cd "$GITHUB_WORKSPACE/kernel"                                                 
-              curl -LSs                                                                     
-              "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash
-              -s v0.9.5                                                                     
-              if ! grep -q "CONFIG_KSU" drivers/Kconfig; then                               
+            run: |
+              git clone --depth=1 -b alps-mp-r0.mp1.tc16sp-pr4-V1_k65v1_64
+              https://github.com/realme-mediatek-dev/android_kernel_realme_mt6765.git       
+              "$GITHUB_WORKSPACE/kernel"
+  
+          - name: Integrate KernelSU
+            run: |
+              cd "$GITHUB_WORKSPACE/kernel"
+              curl -LSs
+              https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh -o      
+              setup.sh                                                                      
+              bash setup.sh v0.9.5
+              if ! grep -q "CONFIG_KSU" drivers/Kconfig; then
                 sed -i '/endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig       
-              fi                                                                            
-              if ! grep -q "kernelsu" drivers/Makefile; then                                
-                echo "obj-y += kernelsu/" >> drivers/Makefile                               
-              fi                                                                            
-                                                                                            
-          - name: Configure defconfig                                                       
-            run: |                                                                          
-              cd "$GITHUB_WORKSPACE/kernel"                                                 
-              DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"                             
-              if [ ! -f "$DEFCONFIG" ]; then                                                
+              fi
+              if ! grep -q "kernelsu" drivers/Makefile; then
+                echo "obj-y += kernelsu/" >> drivers/Makefile
+              fi
+  
+          - name: Configure defconfig
+            run: |
+              cd "$GITHUB_WORKSPACE/kernel"
+              DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"
+              if [ ! -f "$DEFCONFIG" ]; then
                 DEFCONFIG=$(find arch/arm64/configs/ -name "*6765*defconfig" | head -n 1)   
-              fi                                                                            
-              echo "Selected defconfig: $DEFCONFIG"                                         
+              fi
+              echo "Selected defconfig: $DEFCONFIG"
               cat << 'EOF' >> "$DEFCONFIG"                                                  
               CONFIG_KSU=y                                                                  
               CONFIG_KPROBES=y                                                              
@@ -85,12 +84,12 @@ jobs:
               if [ -f "$GITHUB_WORKSPACE/boot.img.gz" ]; then                               
                 echo "Decompressing boot.img.gz..."                                         
                 gzip -d "$GITHUB_WORKSPACE/boot.img.gz"                                     
-              fi                                                                            
-                                                                                            
-              if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then                                  
-                echo "Repacking boot.img..."                                                
-                cd "$GITHUB_WORKSPACE"                                                      
-                wget -q                                                                     
+              fi
+  
+              if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then
+                echo "Repacking boot.img..."
+                cd "$GITHUB_WORKSPACE"
+                wget -q
                 https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
                 unzip -p Magisk-v27.0.apk lib/x86_64/libmagiskboot.so > magiskboot          
                 chmod +x magiskboot
