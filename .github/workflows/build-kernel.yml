@@ -127,20 +127,33 @@ jobs:
 
           if [ -f "$GITHUB_WORKSPACE/boot.img.gz" ]; then
             echo "Decompressing boot.img.gz..."
-            gzip -d "$GITHUB_WORKSPACE/boot.img.gz"
+            gzip -dc "$GITHUB_WORKSPACE/boot.img.gz" > "$GITHUB_WORKSPACE/boot.img"
           fi
 
           if [ -f "$GITHUB_WORKSPACE/boot.img" ]; then
-            echo "Repacking boot.img..."
-            cd "$GITHUB_WORKSPACE"
+            echo "Repacking boot.img in /tmp/repack..."
+            rm -rf /tmp/repack
+            mkdir -p /tmp/repack
+            cd /tmp/repack
+
             M_URL="https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk"
             wget -q $M_URL -O magisk.apk
             unzip -p magisk.apk lib/x86_64/libmagiskboot.so > magiskboot
             chmod +x magiskboot
+
+            cp "$GITHUB_WORKSPACE/boot.img" boot.img
             ./magiskboot unpack boot.img
-            cp "$KERNEL_BIN" kernel
-            ./magiskboot repack boot.img "$GITHUB_WORKSPACE/output/boot-kernelsu.img"
-            echo "Done repacking!"
+
+            if ./magiskboot split "$KERNEL_BIN"; then
+              echo "Successfully split compiled Image.gz-dtb into kernel and kernel_dtb!"
+            else
+              echo "Using compiled kernel directly as kernel component..."
+              cp "$KERNEL_BIN" kernel
+            fi
+
+            ./magiskboot repack boot.img new-boot.img
+            cp new-boot.img "$GITHUB_WORKSPACE/output/boot-kernelsu.img"
+            echo "Done repacking! Output saved to $GITHUB_WORKSPACE/output/boot-kernelsu.img"
           fi
 
       - name: Upload Finished Artifacts
