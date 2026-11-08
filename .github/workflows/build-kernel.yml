@@ -70,6 +70,7 @@ jobs:
           printf '%s\n' '#define KERNEL_DO_INITCALLS_DONE 4' >> "$PHOENIX_DIR/oppo_phoenix.h"
           printf '%s\n' '#define KERNEL_INIT_DONE 5' >> "$PHOENIX_DIR/oppo_phoenix.h"
           printf '%s\n' '#define KERNEL_DO_BASIC_SETUP_DONE 6' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_DELAYACCT_INIT_DONE 7' >> "$PHOENIX_DIR/oppo_phoenix.h"
           printf '%s\n' 'extern void (*phx_set_boot_stage)(int stage);' >> "$PHOENIX_DIR/oppo_phoenix.h"
           printf '%s\n' '#endif' >> "$PHOENIX_DIR/oppo_phoenix.h"
 
