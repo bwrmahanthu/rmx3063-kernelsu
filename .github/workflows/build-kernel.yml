@@ -59,6 +59,20 @@ jobs:
           sed -i 's/clock_gettime_return,/clock_gettime_return/g' arch/arm64/kernel/vdso/gettimeofday.S
           sed -i 's|cmd_vdsold = $(CC) $(c_flags)|cmd_vdsold = $(CC) $(c_flags) -fuse-ld=/usr/bin/aarch64-linux-gnu-ld|g' arch/arm64/kernel/vdso/Makefile
 
+          # Create stub for missing oppo_phoenix vendor header
+          PHOENIX_DIR="$GITHUB_WORKSPACE/vendor/oppo/oppo_phoenix/kernel/oppo_phoenix"
+          mkdir -p "$PHOENIX_DIR"
+          printf '%s\n' '#ifndef __OPPO_PHOENIX_H__' > "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define __OPPO_PHOENIX_H__' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_MM_INIT_DONE 1' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_LOCAL_IRQ_ENABLE 2' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_DRIVER_INIT_DONE 3' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_DO_INITCALLS_DONE 4' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_INIT_DONE 5' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#define KERNEL_DO_BASIC_SETUP_DONE 6' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' 'extern void (*phx_set_boot_stage)(int stage);' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          printf '%s\n' '#endif' >> "$PHOENIX_DIR/oppo_phoenix.h"
+
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
           CONFIG_KSU=y
