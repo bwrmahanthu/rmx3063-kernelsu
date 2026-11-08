@@ -15,7 +15,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git build-essential bc bison flex
           sudo apt-get install -y libssl-dev libelf-dev libncurses-dev
-          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+          sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu gcc-arm-linux-gnueabi
           sudo apt-get install -y python2 zip curl wget gzip
           sudo ln -sf /usr/bin/python2 /usr/bin/python
 
@@ -23,7 +23,6 @@ jobs:
         run: |
           CLANG_URL="https://github.com/kdrag0n/proton-clang.git"
           git clone --depth=1 $CLANG_URL "$GITHUB_WORKSPACE/clang"
-          ln -sf aarch64-linux-gnu-ld "$GITHUB_WORKSPACE/clang/bin/ld"
 
       - name: Clone Realme C20 Kernel Source
         run: |
@@ -58,6 +57,7 @@ jobs:
           sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.l
           sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.lex.c_shipped
           sed -i 's/clock_gettime_return,/clock_gettime_return/g' arch/arm64/kernel/vdso/gettimeofday.S
+          sed -i 's|cmd_vdsold = $(CC) $(c_flags)|cmd_vdsold = $(CC) $(c_flags) -fuse-ld=/usr/bin/aarch64-linux-gnu-ld|g' arch/arm64/kernel/vdso/Makefile
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
