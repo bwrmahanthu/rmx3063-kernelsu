@@ -46,6 +46,12 @@ jobs:
           cd "$GITHUB_WORKSPACE/kernel"
           DEFCONFIG="arch/arm64/configs/oppo6765_defconfig"
           echo "Patching defconfig: $DEFCONFIG"
+          
+          # Fix compiler compatibility for Clang 4.9
+          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_NONE=y/' "$DEFCONFIG"
+          sed -i 's/-Werror=unknown-warning-option//g' Makefile
+
+          # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
           CONFIG_KSU=y
           CONFIG_KPROBES=y
@@ -62,8 +68,9 @@ jobs:
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-          make O=out oppo6765_defconfig
-          make -j$(nproc) O=out CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
+          
+          make O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- oppo6765_defconfig
+          make -j$(nproc) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
 
       - name: Repack boot.img
         run: |
