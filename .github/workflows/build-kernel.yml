@@ -63,20 +63,10 @@ jobs:
           python3 -c "import base64; exec(base64.b64decode('cCA9ICdhcmNoL2FybTY0L2luY2x1ZGUvYXNtL2Fzc2VtYmxlci5oJwp3aXRoIG9wZW4ocCwgJ3InKSBhcyBmOgogICAgcyA9IGYucmVhZCgpCnRhcmdldCA9ICdcdC5pZlx0KFxcb3AgPT0gY3ZhdSB8fCBcXG9wID09IGN2YWMpXG5hbHRlcm5hdGl2ZV9pZl9ub3QgQVJNNjRfV09SS0FST1VORF9DTEVBTl9DQUNIRVxuXHRkY1x0XFxvcCwgXFxrYWRkclxuYWx0ZXJuYXRpdmVfZWxzZVxuXHRkY1x0Y2l2YWMsIFxca2FkZHJcbmFsdGVybmF0aXZlX2VuZGlmXG5cdC5lbHNlXG5cdGRjXHRcXG9wLCBcXGthZGRyXG5cdC5lbmRpZicKcmVwbCA9ICdhbHRlcm5hdGl2ZV9pZl9ub3QgQVJNNjRfV09SS0FST1VORF9DTEVBTl9DQUNIRVxuXHRkY1x0XFxvcCwgXFxrYWRkclxuYWx0ZXJuYXRpdmVfZWxzZVxuXHRkY1x0Y2l2YWMsIFxca2FkZHJcbmFsdGVybmF0aXZlX2VuZGlmJwphc3NlcnQgdGFyZ2V0IGluIHMsICdUYXJnZXQgYmxvY2sgbm90IGZvdW5kIGluIGFzc2VtYmxlci5oJwp3aXRoIG9wZW4ocCwgJ3cnKSBhcyBmOgogICAgZi53cml0ZShzLnJlcGxhY2UodGFyZ2V0LCByZXBsKSkKcHJpbnQoJ1N1Y2Nlc3NmdWxseSBwYXRjaGVkIGFzc2VtYmxlci5oIScp'))"
           python3 -c "import base64; exec(base64.b64decode('cCA9ICdhcmNoL2FybTY0L2NyeXB0by9hZXMtbW9kZXMuUycKd2l0aCBvcGVuKHAsICdyJykgYXMgZjoKICAgIHMgPSBmLnJlYWQoKQp0YXJnZXQgPSAnXHRsZHJcdFx0cTgsID0weDMwMDAwMDAwMjAwMDAwMDAxXHQvKiBhZGRlbmRzIDEsMiwzWywwXSAqLycKcmVwbCA9ICdcdG1vdlx0XHR4NywgIzFcblx0bW92a1x0XHR4NywgIzIsIGxzbCAjMzJcblx0Zm1vdlx0XHRkOCwgeDdcblx0bW92XHRcdHg3LCAjM1xuXHRpbnNcdFx0djguZFsxXSwgeDcnCmFzc2VydCB0YXJnZXQgaW4gcywgJ1RhcmdldCBsaXRlcmFsIG5vdCBmb3VuZCBpbiBhZXMtbW9kZXMuUycKd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgIGYud3JpdGUocy5yZXBsYWNlKHRhcmdldCwgcmVwbCkpCnByaW50KCdTdWNjZXNzZnVsbHkgcGF0Y2hlZCBhZXMtbW9kZXMuUyEnKQo='))"
 
-          # Create stub for missing oppo_phoenix vendor header
+          # Copy real oppo_phoenix header to expected vendor path
           PHOENIX_DIR="$GITHUB_WORKSPACE/vendor/oppo/oppo_phoenix/kernel/oppo_phoenix"
           mkdir -p "$PHOENIX_DIR"
-          printf '%s\n' '#ifndef __OPPO_PHOENIX_H__' > "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define __OPPO_PHOENIX_H__' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_MM_INIT_DONE 1' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_LOCAL_IRQ_ENABLE 2' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_DRIVER_INIT_DONE 3' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_DO_INITCALLS_DONE 4' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_INIT_DONE 5' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_DO_BASIC_SETUP_DONE 6' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#define KERNEL_DELAYACCT_INIT_DONE 7' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' 'extern void (*phx_set_boot_stage)(int stage);' >> "$PHOENIX_DIR/oppo_phoenix.h"
-          printf '%s\n' '#endif' >> "$PHOENIX_DIR/oppo_phoenix.h"
+          cp "$GITHUB_WORKSPACE/kernel/drivers/soc/oppo/oppo_phoenix/oppo_phoenix.h" "$PHOENIX_DIR/oppo_phoenix.h"
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
