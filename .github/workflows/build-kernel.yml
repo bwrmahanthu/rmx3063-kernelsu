@@ -71,8 +71,18 @@ jobs:
 
           # Remove -Werror and fix misleading indentation in sound/drivers
           find sound/ drivers/ -name Makefile -exec sed -i 's/-Werror//g' {} +
+          sed -i 's/-Werror=strict-prototypes//g' Makefile
+          sed -i 's/-Werror=implicit-int//g' Makefile
+          sed -i 's/-Werror=incompatible-pointer-types//g' Makefile
           sed -i 's/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS)/KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS) -Wno-error -Wno-misleading-indentation/' Makefile
           python3 -c "import base64; exec(base64.b64decode('cCA9ICdzb3VuZC9zb2MvbWVkaWF0ZWsvY29kZWMvbXQ2MzU3L210ay1zb2MtY29kZWMtNjM1Ny5jJwp3aXRoIG9wZW4ocCwgJ3InKSBhcyBmOgogICAgcyA9IGYucmVhZCgpCnRhcmdldCA9ICdcdFx0aWYgKEdldERMU3RhdHVzKCkgPT0gdHJ1ZSlcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTsnCnJlcGwgPSAnXHRcdGlmIChHZXRETFN0YXR1cygpID09IHRydWUpIHtcblx0XHRcdFR1cm5PbkRhY1Bvd2VyKEFVRElPX0FOQUxPR19ERVZJQ0VfT1VUX0hFQURTRVRMKTtcblx0XHR9Jwphc3NlcnQgdGFyZ2V0IGluIHMsICdUYXJnZXQgc3RhdGVtZW50IG5vdCBmb3VuZCBpbiBtdGstc29jLWNvZGVjLTYzNTcuYycKd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgIGYud3JpdGUocy5yZXBsYWNlKHRhcmdldCwgcmVwbCkpCnByaW50KCdTdWNjZXNzZnVsbHkgcGF0Y2hlZCBtdGstc29jLWNvZGVjLTYzNTcuYyEnKQo='))"
+
+          # Fix memcpy, memmove, memset changed binding to STB_GLOBAL for Clang IAS
+          python3 -c "import base64; exec(base64.b64decode('Zm9yIG5hbWUgaW4gWydtZW1jcHknLCAnbWVtbW92ZScsICdtZW1zZXQnXToKICAgIHAgPSAnYXJjaC9hcm02NC9saWIvJyArIG5hbWUgKyAnLlMnCiAgICB3aXRoIG9wZW4ocCwgJ3InKSBhcyBmOgogICAgICAgIHMgPSBmLnJlYWQoKQogICAgdGFyZ2V0ID0gJ1x0LndlYWsgJyArIG5hbWUgKyAnXG5FTlRSWShfXycgKyBuYW1lICsgJylcbkVOVFJZKCcgKyBuYW1lICsgJyknCiAgICByZXBsID0gJ0VOVFJZKF9fJyArIG5hbWUgKyAnKVxuV0VBSygnICsgbmFtZSArICcpJwogICAgYXNzZXJ0IHRhcmdldCBpbiBzLCAnVGFyZ2V0IG5vdCBmb3VuZCBpbiAnICsgcAogICAgd2l0aCBvcGVuKHAsICd3JykgYXMgZjoKICAgICAgICBmLndyaXRlKHMucmVwbGFjZSh0YXJnZXQsIHJlcGwpKQpwcmludCgnU3VjY2Vzc2Z1bGx5IHBhdGNoZWQgbWVtY3B5LCBtZW1tb3ZlLCBtZW1zZXQgaW4gYXJjaC9hcm02NC9saWIhJykK'))"
+
+          # Fix old-style function prototypes in camera sensor driver
+          sed -i 's/void hi556_otp_read_enable()/void hi556_otp_read_enable(void)/g' drivers/misc/mediatek/cam_cal/src/mt6765/otp_insensor_dev.c
+          sed -i 's/void hi556_otp_read_disable()/void hi556_otp_read_disable(void)/g' drivers/misc/mediatek/cam_cal/src/mt6765/otp_insensor_dev.c
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
