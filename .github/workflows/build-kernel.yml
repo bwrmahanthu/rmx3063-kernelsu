@@ -93,8 +93,6 @@ jobs:
           # Fix UB: remove const from all lcm_utils in ddp_dsi.c so compiler does not zero-out or place in rodata
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
-          sed -i 's/const struct LCM_UTIL_FUNCS PM_lcm_utils_/struct LCM_UTIL_FUNCS PM_lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
-          sed -i 's/const struct LCM_UTIL_FUNCS PM_lcm_utils_/struct LCM_UTIL_FUNCS PM_lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
 
           # Fix NULL function pointer calls across all LCM panel drivers
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq_V2(cmd, count, ppara, force_update)|do { if (lcm_util.dsi_set_cmdq_V2) lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update); } while (0)|g' {} +
