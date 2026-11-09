@@ -94,8 +94,8 @@ jobs:
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
 
-          # Fix NULL function pointer call in LCM panel drivers push_table
-          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's/dsi_set_cmdq_V22(cmdq, cmd,/if (lcm_util.dsi_set_cmdq_V22) dsi_set_cmdq_V22(cmdq, cmd,/g' {} +
+          # Fix NULL function pointer call in LCM panel drivers
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update)|do { if (lcm_util.dsi_set_cmdq_V22) lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update); } while (0)|g' {} +
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
