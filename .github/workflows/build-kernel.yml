@@ -51,7 +51,7 @@ jobs:
           
           # Fix compiler compatibility for modern Clang & GCC on Linux 4.9
           echo "exit 0" > scripts/clang-android.sh
-          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_NONE=y/' "$DEFCONFIG"
+          # Keep CONFIG_CC_STACKPROTECTOR_STRONG=y to match vendor modules
           sed -i 's/-Werror=unknown-warning-option//g' Makefile
           sed -i 's/-no-integrated-as//g' Makefile
           sed -i 's/HOSTCFLAGS   :=/HOSTCFLAGS   := -fcommon /' Makefile
@@ -100,6 +100,9 @@ jobs:
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq(pdata, queue_size, force_update)|do { if (lcm_util.dsi_set_cmdq) lcm_util.dsi_set_cmdq(pdata, queue_size, force_update); } while (0)|g' {} +
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_cmd(cmd)|do { if (lcm_util.dsi_write_cmd) lcm_util.dsi_write_cmd(cmd); } while (0)|g' {} +
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_regs(addr, pdata, byte_nums)|do { if (lcm_util.dsi_write_regs) lcm_util.dsi_write_regs(addr, pdata, byte_nums); } while (0)|g' {} +
+
+          # Run vendor WiFi/BT module compatibility patcher
+          python3 "$GITHUB_WORKSPACE/scripts/patch-kernel.py" "$GITHUB_WORKSPACE/kernel"
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
