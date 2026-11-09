@@ -102,8 +102,6 @@ jobs:
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq(pdata, queue_size, force_update)|do { if (lcm_util.dsi_set_cmdq) lcm_util.dsi_set_cmdq(pdata, queue_size, force_update); } while (0)|g' {} +
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_cmd(cmd)|do { if (lcm_util.dsi_write_cmd) lcm_util.dsi_write_cmd(cmd); } while (0)|g' {} +
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_regs(addr, pdata, byte_nums)|do { if (lcm_util.dsi_write_regs) lcm_util.dsi_write_regs(addr, pdata, byte_nums); } while (0)|g' {} +
-          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|(lcm_util\.mdelay(n))|((lcm_util.mdelay) ? lcm_util.mdelay(n) : mdelay(n))|g' {} +
-          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|(lcm_util\.udelay(n))|((lcm_util.udelay) ? lcm_util.udelay(n) : udelay(n))|g' {} +
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
