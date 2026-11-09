@@ -90,6 +90,13 @@ jobs:
           # Implement stpcpy for Clang 12+ libcall optimization
           python3 -c "import base64; exec(base64.b64decode('aW1wb3J0IGJhc2U2NApwMSA9ICJpbmNsdWRlL2xpbnV4L3N0cmluZy5oIgp3aXRoIG9wZW4ocDEsICJyIikgYXMgZjogczEgPSBmLnJlYWQoKQp0YXJnZXQxID0gImV4dGVybiBjaGFyICogc3RyY3B5KGNoYXIgKixjb25zdCBjaGFyICopOyIKcmVwbDEgPSB0YXJnZXQxICsgY2hyKDEwKSArICJleHRlcm4gY2hhciAqIHN0cGNweShjaGFyICosIGNvbnN0IGNoYXIgKik7Igphc3NlcnQgdGFyZ2V0MSBpbiBzMSwgIlRhcmdldCBub3QgZm91bmQgaW4gc3RyaW5nLmgiCndpdGggb3BlbihwMSwgInciKSBhcyBmOiBmLndyaXRlKHMxLnJlcGxhY2UodGFyZ2V0MSwgcmVwbDEpKQoKcDIgPSAibGliL3N0cmluZy5jIgp3aXRoIG9wZW4ocDIsICJhYiIpIGFzIGY6IGYud3JpdGUoYmFzZTY0LmI2NGRlY29kZSgiQ2lOcFptNWtaV1lnWDE5SVFWWkZYMEZTUTBoZlUxUlFRMUJaQ21Ob1lYSWdLbk4wY0dOd2VTaGphR0Z5SUNwa1pYTjBMQ0JqYjI1emRDQmphR0Z5SUNwemNtTXBDbnNLQ1hOcGVtVmZkQ0JzWlc0Z1BTQnpkSEpzWlc0b2MzSmpLVHNLQ1cxbGJXTndlU2hrWlhOMExDQnpjbU1zSUd4bGJpQXJJREVwT3dvSmNtVjBkWEp1SUdSbGMzUWdLeUJzWlc0N0NuMEtSVmhRVDFKVVgxTlpUVUpQVENoemRIQmpjSGtwT3dvalpXNWthV1lLIikpCnByaW50KCJTdWNjZXNzZnVsbHkgYWRkZWQgc3RwY3B5IGltcGxlbWVudGF0aW9uISIpCg=='))"
 
+          # Fix UB: remove const from lcm_utils in ddp_dsi.c so compiler does not zero-out function pointers
+          sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
+          sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
+
+          # Fix NULL function pointer call in LCM panel drivers push_table
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's/dsi_set_cmdq_V22(cmdq, cmd,/if (lcm_util.dsi_set_cmdq_V22) dsi_set_cmdq_V22(cmdq, cmd,/g' {} +
+
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
           CONFIG_KSU=y
