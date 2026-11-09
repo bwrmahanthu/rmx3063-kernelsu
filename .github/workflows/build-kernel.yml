@@ -90,12 +90,20 @@ jobs:
           # Implement stpcpy for Clang 12+ libcall optimization
           python3 -c "import base64; exec(base64.b64decode('aW1wb3J0IGJhc2U2NApwMSA9ICJpbmNsdWRlL2xpbnV4L3N0cmluZy5oIgp3aXRoIG9wZW4ocDEsICJyIikgYXMgZjogczEgPSBmLnJlYWQoKQp0YXJnZXQxID0gImV4dGVybiBjaGFyICogc3RyY3B5KGNoYXIgKixjb25zdCBjaGFyICopOyIKcmVwbDEgPSB0YXJnZXQxICsgY2hyKDEwKSArICJleHRlcm4gY2hhciAqIHN0cGNweShjaGFyICosIGNvbnN0IGNoYXIgKik7Igphc3NlcnQgdGFyZ2V0MSBpbiBzMSwgIlRhcmdldCBub3QgZm91bmQgaW4gc3RyaW5nLmgiCndpdGggb3BlbihwMSwgInciKSBhcyBmOiBmLndyaXRlKHMxLnJlcGxhY2UodGFyZ2V0MSwgcmVwbDEpKQoKcDIgPSAibGliL3N0cmluZy5jIgp3aXRoIG9wZW4ocDIsICJhYiIpIGFzIGY6IGYud3JpdGUoYmFzZTY0LmI2NGRlY29kZSgiQ2lOcFptNWtaV1lnWDE5SVFWWkZYMEZTUTBoZlUxUlFRMUJaQ21Ob1lYSWdLbk4wY0dOd2VTaGphR0Z5SUNwa1pYTjBMQ0JqYjI1emRDQmphR0Z5SUNwemNtTXBDbnNLQ1hOcGVtVmZkQ0JzWlc0Z1BTQnpkSEpzWlc0b2MzSmpLVHNLQ1cxbGJXTndlU2hrWlhOMExDQnpjbU1zSUd4bGJpQXJJREVwT3dvSmNtVjBkWEp1SUdSbGMzUWdLeUJzWlc0N0NuMEtSVmhRVDFKVVgxTlpUVUpQVENoemRIQmpjSGtwT3dvalpXNWthV1lLIikpCnByaW50KCJTdWNjZXNzZnVsbHkgYWRkZWQgc3RwY3B5IGltcGxlbWVudGF0aW9uISIpCg=='))"
 
-          # Fix UB: remove const from lcm_utils in ddp_dsi.c so compiler does not zero-out function pointers
+          # Fix UB: remove const from all lcm_utils in ddp_dsi.c so compiler does not zero-out or place in rodata
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
           sed -i 's/static const struct LCM_UTIL_FUNCS lcm_utils_/static struct LCM_UTIL_FUNCS lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
+          sed -i 's/const struct LCM_UTIL_FUNCS PM_lcm_utils_/struct LCM_UTIL_FUNCS PM_lcm_utils_/g' drivers/misc/mediatek/video/mt6765/dispsys/ddp_dsi.c
+          sed -i 's/const struct LCM_UTIL_FUNCS PM_lcm_utils_/struct LCM_UTIL_FUNCS PM_lcm_utils_/g' drivers/misc/mediatek/video/mt6779/dispsys/ddp_dsi.c
 
-          # Fix NULL function pointer call in LCM panel drivers
+          # Fix NULL function pointer calls across all LCM panel drivers
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq_V2(cmd, count, ppara, force_update)|do { if (lcm_util.dsi_set_cmdq_V2) lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update); } while (0)|g' {} +
           find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update)|do { if (lcm_util.dsi_set_cmdq_V22) lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update); } while (0)|g' {} +
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_set_cmdq(pdata, queue_size, force_update)|do { if (lcm_util.dsi_set_cmdq) lcm_util.dsi_set_cmdq(pdata, queue_size, force_update); } while (0)|g' {} +
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_cmd(cmd)|do { if (lcm_util.dsi_write_cmd) lcm_util.dsi_write_cmd(cmd); } while (0)|g' {} +
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|lcm_util\.dsi_write_regs(addr, pdata, byte_nums)|do { if (lcm_util.dsi_write_regs) lcm_util.dsi_write_regs(addr, pdata, byte_nums); } while (0)|g' {} +
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|(lcm_util\.mdelay(n))|((lcm_util.mdelay) ? lcm_util.mdelay(n) : mdelay(n))|g' {} +
+          find drivers/misc/mediatek/lcm/ -name "*.c" -exec sed -i 's|(lcm_util\.udelay(n))|((lcm_util.udelay) ? lcm_util.udelay(n) : udelay(n))|g' {} +
 
           # Append KernelSU flags
           cat << 'EOF' >> "$DEFCONFIG"
@@ -161,6 +169,9 @@ jobs:
             ./magiskboot repack boot.img new-boot.img
             cp new-boot.img "$GITHUB_WORKSPACE/output/boot-kernelsu.img"
             echo "Done repacking! Output saved to $GITHUB_WORKSPACE/output/boot-kernelsu.img"
+            cd "$GITHUB_WORKSPACE/output"
+            sha256sum * > SHA256SUMS.txt
+            cat SHA256SUMS.txt
           fi
 
       - name: Upload Finished Artifacts
